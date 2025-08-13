@@ -1,0 +1,22 @@
+{
+  "name": "mht-to-pdf-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HTTP service to convert self-contained MHT/MHTML files to PDF using mhtml-to-html and wkhtmltopdf",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "pino": "^9.1.0",
+    "pino-http": "^10.3.0",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
+
