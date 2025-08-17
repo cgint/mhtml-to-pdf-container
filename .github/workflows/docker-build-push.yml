@@ -1,4 +1,4 @@
-name: Docker Image CI/CD
+name: Docker Image Push To DockerHub CI/CD
 
 # Trigger the workflow on every push to the main branch
 on:
@@ -30,7 +30,7 @@ jobs:
 
     - name: Get image tag
       id: get_tag
-      run: echo "IMAGE_TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+      run: echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
 
     - name: Set cache tag
       id: set_cache_tag
