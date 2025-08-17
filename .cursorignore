@@ -33,6 +33,10 @@ htmlcov/
 .DS_Store
 .~lock*
 
+# Spring Application Properties
+application*.properties
+application*.yml
+
 # Test output files
 test-logs/
 test-results/
@@ -43,7 +47,7 @@ playwright-report/
 .aider*
 .env
 *.env.yaml
-*_codegiant_*
+# *_codegiant_*
 
 *.log
 *.tar.gz
