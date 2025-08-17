@@ -1,9 +1,9 @@
 name: Docker Image To DockerHub CI/CD
 
-# Trigger the workflow on every push to the master branch
+# Trigger the workflow on every push to the main branch
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 # Define environment variables at the workflow level
 env:
