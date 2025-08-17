@@ -29,7 +29,12 @@ jobs:
     # Get the image tag. This example uses the commit SHA.
     - name: Get image tag
       id: get_tag
-      run: echo "IMAGE_TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+      run: echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+
+    # Use a different tag for the cache, such as 'latest' or 'cache'
+    - name: Set cache tag
+      id: set_cache_tag
+      run: echo "CACHE_TAG=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:cache" >> $GITHUB_OUTPUT
 
     # Build the Docker image
     - name: Build Docker image
@@ -38,3 +43,7 @@ jobs:
         context: .
         push: true
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get_tag.outputs.IMAGE_TAG }}
+
+        # ⬅️ Add these two lines for caching
+        cache-from: type=registry,ref=${{ steps.set_cache_tag.outputs.CACHE_TAG }}
+        cache-to: type=registry,ref=${{ steps.set_cache_tag.outputs.CACHE_TAG }},mode=max
