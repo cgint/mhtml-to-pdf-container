@@ -3,8 +3,7 @@ FROM ghcr.io/surnet/alpine-wkhtmltopdf:3.22.0-024b2b2-full
 # Install Node.js, npm, and fonts for broad glyph coverage
 RUN apk add --no-cache nodejs npm coreutils poppler-utils chromium font-noto ttf-freefont
 
-# Install mhtml-to-html CLI globally
-RUN npm i -g mhtml-to-html
+# No longer need mhtml-to-html CLI
 
 # Create non-root user
 RUN addgroup -S app && adduser -S app -G app

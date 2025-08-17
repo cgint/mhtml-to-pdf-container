@@ -91,84 +91,52 @@ async function convertMhtToPdf(mhtPath, wkhtmlOptions, res) {
   const jobDir = path.join(os.tmpdir(), `job-${randomUUID()}`);
   await fs.promises.mkdir(jobDir, { recursive: true });
   const jobMhtPath = path.join(jobDir, "input.mht");
-  const htmlPath = path.join(jobDir, "input.html");
   const pdfPath = path.join(jobDir, "output.pdf");
 
   try {
-    // Move/copy input into job directory with a fixed name so the converter writes HTML alongside it
+    // Copy input into job directory with a fixed name
     await fs.promises.copyFile(mhtPath, jobMhtPath);
-    // Step 1: mhtml-to-html (scripts disabled by default, offline)
-    let mhtmlStderr = "";
-    await new Promise((resolve, reject) => {
-      const child = spawn("mhtml-to-html", [jobMhtPath], {
-        stdio: ["ignore", "pipe", "pipe"],
-      });
+
+    // Single-step: render MHT directly to PDF using headless Chromium
+    const chromeArgs = [
+      "--headless=new",
+      "--disable-gpu",
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-software-rasterizer",
+      "--allow-file-access-from-files",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost",
+      "--virtual-time-budget=10000",
+      `--print-to-pdf=${pdfPath}`,
+      `file://${jobMhtPath}`,
+    ];
+
+    // Try chromium-browser first, then chromium as a fallback
+    const runChromium = (bin) => new Promise((resolve, reject) => {
+      const child = spawn(bin, chromeArgs, { stdio: ["ignore", "ignore", "pipe"] });
+      let stderr = "";
       const t = setTimeout(() => {
         child.kill("SIGKILL");
-        reject(new Error(`mhtml-to-html timeout after ${JOB_TIMEOUT_MS}ms`));
+        reject(new Error(`chromium timeout after ${JOB_TIMEOUT_MS}ms`));
       }, JOB_TIMEOUT_MS);
-      child.stderr.on("data", (d) => (mhtmlStderr += d.toString()));
+      child.stderr.on("data", (d) => (stderr += d.toString()));
       child.on("close", (code) => {
         clearTimeout(t);
         if (code === 0) resolve();
-        else reject(new Error(`mhtml-to-html failed (${code}): ${mhtmlStderr}`));
+        else reject(new Error(`chromium failed (${code}): ${stderr}`));
       });
       child.on("error", reject);
     });
 
-    // Ensure expected HTML exists (converter writes next to input with .html extension)
-    const htmlStat = await fs.promises.stat(htmlPath).catch(() => null);
-    if (!htmlStat) {
-      throw new Error(`mhtml-to-html did not produce expected HTML output. Error: ${mhtmlStderr}`);
-    }
-
-    // Step 2: render to PDF
-    if (RENDERER === "chromium") {
-      // Use headless Chromium to render HTML to PDF with file:// load only and no network
-      const chromeArgs = [
-        "--headless=new",
-        "--disable-gpu",
-        "--no-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-software-rasterizer",
-        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost",
-        "--virtual-time-budget=10000",
-        `--print-to-pdf=${pdfPath}`,
-        `file://${htmlPath}`,
-      ];
-      await new Promise((resolve, reject) => {
-        const child = spawn("chromium-browser", chromeArgs, { stdio: ["ignore", "ignore", "pipe"] });
-        let stderr = "";
-        const t = setTimeout(() => {
-          child.kill("SIGKILL");
-          reject(new Error(`chromium timeout after ${JOB_TIMEOUT_MS}ms`));
-        }, JOB_TIMEOUT_MS);
-        child.stderr.on("data", (d) => (stderr += d.toString()));
-        child.on("close", (code) => {
-          clearTimeout(t);
-          if (code === 0) resolve();
-          else reject(new Error(`chromium failed (${code}): ${stderr}`));
-        });
-        child.on("error", reject);
-      });
-    } else {
-      const args = buildWkhtmlArgs(htmlPath, wkhtmlOptions || {});
-      const fileArgs = args.slice(0, -1).concat(pdfPath);
-      await new Promise((resolve, reject) => {
-        const child = spawn("wkhtmltopdf", fileArgs, { stdio: ["ignore", "ignore", "pipe"] });
-        let stderr = "";
-        const t = setTimeout(() => {
-          child.kill("SIGKILL");
-          reject(new Error(`wkhtmltopdf timeout after ${JOB_TIMEOUT_MS}ms`));
-        }, JOB_TIMEOUT_MS);
-        child.stderr.on("data", (d) => (stderr += d.toString()));
-        child.on("close", (code) => {
-          clearTimeout(t);
-          if (code === 0) resolve();
-          else reject(new Error(`wkhtmltopdf failed (${code}): ${stderr}`));
-        });
-        child.on("error", reject);
-      });
+    try {
+      await runChromium("chromium-browser");
+    } catch (err) {
+      if (err && err.code === "ENOENT") {
+        // binary not found → try alternate name
+        await runChromium("chromium");
+      } else {
+        throw err;
+      }
     }
 
     // Stream the generated PDF to the response
