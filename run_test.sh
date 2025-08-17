@@ -25,6 +25,7 @@ curl -f -X POST -F file=@$INPUT_FILE http://localhost:9111/mht-to-pdf -o $OUTPUT
 
 echo "Done!"
 
-echo
-echo Testing deployed endpoint on bunny.net in the background ...
-curl -f -X POST -F file=@$INPUT_FILE https://mc-wogbsinf6n.bunny.run/mht-to-pdf -o $OUTPUT_FILE_BUNNY
+# Undeployed again
+# echo
+# echo Testing deployed endpoint on bunny.net in the background ...
+# curl -f -X POST -F file=@$INPUT_FILE https://mc-wogbsinf6n.bunny.run/mht-to-pdf -o $OUTPUT_FILE_BUNNY
