@@ -2,7 +2,7 @@
   "name": "mht-to-pdf-service",
   "version": "0.1.0",
   "private": true,
-  "description": "HTTP service to convert self-contained MHT/MHTML files to PDF using mhtml-to-html and wkhtmltopdf",
+  "description": "HTTP service to convert self-contained MHT files to PDF using mhtml-to-html and wkhtmltopdf",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
