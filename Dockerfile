@@ -28,6 +28,6 @@ EXPOSE 8080
 
 # Clear base image entrypoint (wkhtmltopdf) so our server runs
 ENTRYPOINT []
-CMD ["node", "server.js"]
+CMD ["node", "--stack-size=1200", "server.js"]
 
 
