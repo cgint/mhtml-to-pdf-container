@@ -233,7 +233,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  logger.info({ port: PORT }, "server started");
+  logger.info({ port: PORT }, "MHT-to-PDF server started");
 });
 
 
