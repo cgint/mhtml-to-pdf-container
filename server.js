@@ -97,22 +97,21 @@ async function convertMhtToPdf(mhtPath, wkhtmlOptions, res) {
   try {
     // Move/copy input into job directory with a fixed name so the converter writes HTML alongside it
     await fs.promises.copyFile(mhtPath, jobMhtPath);
-
     // Step 1: mhtml-to-html (scripts disabled by default, offline)
+    let mhtmlStderr = "";
     await new Promise((resolve, reject) => {
       const child = spawn("mhtml-to-html", [jobMhtPath], {
         stdio: ["ignore", "pipe", "pipe"],
       });
-      let stderr = "";
       const t = setTimeout(() => {
         child.kill("SIGKILL");
         reject(new Error(`mhtml-to-html timeout after ${JOB_TIMEOUT_MS}ms`));
       }, JOB_TIMEOUT_MS);
-      child.stderr.on("data", (d) => (stderr += d.toString()));
+      child.stderr.on("data", (d) => (mhtmlStderr += d.toString()));
       child.on("close", (code) => {
         clearTimeout(t);
         if (code === 0) resolve();
-        else reject(new Error(`mhtml-to-html failed (${code}): ${stderr}`));
+        else reject(new Error(`mhtml-to-html failed (${code}): ${mhtmlStderr}`));
       });
       child.on("error", reject);
     });
@@ -120,7 +119,7 @@ async function convertMhtToPdf(mhtPath, wkhtmlOptions, res) {
     // Ensure expected HTML exists (converter writes next to input with .html extension)
     const htmlStat = await fs.promises.stat(htmlPath).catch(() => null);
     if (!htmlStat) {
-      throw new Error("mhtml-to-html did not produce expected HTML output");
+      throw new Error(`mhtml-to-html did not produce expected HTML output. Error: ${mhtmlStderr}`);
     }
 
     // Step 2: render to PDF
