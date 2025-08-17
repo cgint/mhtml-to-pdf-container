@@ -15,7 +15,7 @@ fi
 echo
 echo "Using input file: $INPUT_FILE"
 
-docker compose up -d --build --force-recreate --remove-orphans
+docker compose up -d --build --remove-orphans
 
 echo "Waiting for container to be ready..."
 sleep 3
