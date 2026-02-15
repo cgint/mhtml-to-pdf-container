@@ -131,6 +131,22 @@ The repository includes a test script that demonstrates usage:
 ./run_test.sh /path/to/your/file.mht
 ```
 
+### Release (build + push)
+
+Assumes you are already authenticated to Docker Hub.
+
+```bash
+./release.sh
+# or
+TAG=latest ./release.sh
+```
+
+Optional multi-arch push:
+
+```bash
+PLATFORMS=linux/amd64,linux/arm64 TAG=latest ./release.sh
+```
+
 ## Architecture
 
 The service uses a two-step conversion process:
